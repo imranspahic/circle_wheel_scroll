@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 import 'dart:async';
 import 'dart:collection';
+import 'dart:developer';
 import 'dart:math' as math;
 import 'dart:ui';
 
@@ -471,12 +472,21 @@ class _FixedExtentScrollableState extends ScrollableState {
 /// Defers back to the parent beyond the scroll extents.
 class CircleFixedExtentScrollPhysics extends ScrollPhysics {
   /// Creates a scroll physics that always lands on items.
-  const CircleFixedExtentScrollPhysics({ScrollPhysics? parent})
-      : super(parent: parent);
+  const CircleFixedExtentScrollPhysics({
+    ScrollPhysics? parent,
+    this.springDescription,
+  }) : super(parent: parent);
+
+  ///Spring characteristics that the [SpringSimulation] will use when snapping to the item.
+  ///Defaults to [SpringDescription.withDampingRatio(mass: 0.5, stiffness: 100, ratio: 0.6)].
+  final SpringDescription? springDescription;
 
   @override
   CircleFixedExtentScrollPhysics applyTo(ScrollPhysics? ancestor) {
-    return CircleFixedExtentScrollPhysics(parent: buildParent(ancestor));
+    return CircleFixedExtentScrollPhysics(
+      parent: buildParent(ancestor),
+      springDescription: springDescription,
+    );
   }
 
   @override
@@ -537,12 +547,14 @@ class CircleFixedExtentScrollPhysics extends ScrollPhysics {
     // If we're going to end back at the same item because initial velocity
     // is too low to break past it, use a spring simulation to get back.
     if (settlingItemIndex == metrics.itemIndex) {
+      log("SPRING DESCRIPTION = $springDescription");
       return SpringSimulation(
-        SpringDescription.withDampingRatio(
-          mass: 0.5,
-          stiffness: 100.0,
-          ratio: 0.6,
-        ),
+        springDescription ??
+            SpringDescription.withDampingRatio(
+              mass: 0.5,
+              stiffness: 100.0,
+              ratio: 0.6,
+            ),
         metrics.pixels,
         settlingPixels,
         velocity,
@@ -553,11 +565,12 @@ class CircleFixedExtentScrollPhysics extends ScrollPhysics {
     // Scenario 5:
     // Create a new spring simulation on the item closest to the natural stopping point.
     return SpringSimulation(
-      SpringDescription.withDampingRatio(
-        mass: 0.5,
-        stiffness: 100.0,
-        ratio: 0.9,
-      ),
+      springDescription ??
+          SpringDescription.withDampingRatio(
+            mass: 0.5,
+            stiffness: 100.0,
+            ratio: 0.9,
+          ),
       metrics.pixels,
       settlingPixels,
       velocity,
