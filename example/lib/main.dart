@@ -40,7 +40,13 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: CircleListScrollView(
-        physics: const CircleFixedExtentScrollPhysics(),
+        physics: CircleFixedExtentScrollPhysics(
+          springDescription: SpringDescription.withDampingRatio(
+            mass: 0.8,
+            stiffness: 90,
+            ratio: 0.7,
+          ),
+        ),
         axis: Axis.vertical,
         itemExtent: 100,
         renderChildrenOutsideViewport: true,
