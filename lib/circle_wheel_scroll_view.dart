@@ -255,8 +255,7 @@ class FixedExtentScrollController extends ScrollController {
     }
 
     final List<Future<void>> futures = <Future<void>>[];
-    for (_FixedExtentScrollPosition position
-        in positions as Iterable<_FixedExtentScrollPosition>) {
+    for (_FixedExtentScrollPosition position in positions as List<dynamic>) {
       futures.add(position.animateTo(
         itemIndex * position.itemExtent,
         duration: duration,
@@ -271,8 +270,7 @@ class FixedExtentScrollController extends ScrollController {
   /// Jumps the item index position from its current value to the given value,
   /// without animation, and without checking if the new value is in range.
   void jumpToItem(int itemIndex) {
-    for (_FixedExtentScrollPosition position
-        in positions as Iterable<_FixedExtentScrollPosition>) {
+    for (_FixedExtentScrollPosition position in positions as List<dynamic>) {
       position.jumpTo(itemIndex * position.itemExtent);
     }
   }
@@ -352,15 +350,18 @@ int _getItemFromOffset({
   required double minScrollExtent,
   required double maxScrollExtent,
 }) {
-  return (_clipOffsetToScrollableRange(
-              offset, minScrollExtent, maxScrollExtent) /
-          itemExtent)
-      .round();
+  int itemIndex =
+      (_clipOffsetToScrollableRange(offset, minScrollExtent, maxScrollExtent) /
+              itemExtent)
+          .round();
+  return itemIndex;
 }
 
 double _clipOffsetToScrollableRange(
     double offset, double minScrollExtent, double maxScrollExtent) {
-  return math.min(math.max(offset, minScrollExtent), maxScrollExtent);
+  final double scrollableRange =
+      math.min(math.max(offset, minScrollExtent), maxScrollExtent);
+  return scrollableRange;
 }
 
 /// A [ScrollPositionWithSingleContext] that can only be created based on
@@ -505,13 +506,13 @@ class CircleFixedExtentScrollPhysics extends ScrollPhysics {
     // ballistics, which should put us back in range at the scrollable's boundary.
     if ((velocity <= 0.0 && metrics.pixels <= metrics.minScrollExtent) ||
         (velocity >= 0.0 && metrics.pixels >= metrics.maxScrollExtent)) {
-      return super.createBallisticSimulation(metrics, velocity);
+      return super.createBallisticSimulation(metrics, velocity / 5);
     }
 
     // Create a test simulation to see where it would have ballistically fallen
     // naturally without settling onto items.
     final Simulation? testFrictionSimulation =
-        super.createBallisticSimulation(metrics, velocity);
+        super.createBallisticSimulation(metrics, velocity / 5);
 
     // Scenario 2:
     // If it was going to end up past the scroll extent, defer back to the
@@ -521,7 +522,7 @@ class CircleFixedExtentScrollPhysics extends ScrollPhysics {
         (testFrictionSimulation.x(double.infinity) == metrics.minScrollExtent ||
             testFrictionSimulation.x(double.infinity) ==
                 metrics.maxScrollExtent)) {
-      return super.createBallisticSimulation(metrics, velocity);
+      return super.createBallisticSimulation(metrics, velocity / 5);
     }
 
     // From the natural final position, find the nearest item it should have
@@ -538,6 +539,7 @@ class CircleFixedExtentScrollPhysics extends ScrollPhysics {
     // Scenario 3:
     // If there's no velocity and we're already at where we intend to land,
     // do nothing.
+    final tolerance = toleranceFor(metrics);
     if (velocity.abs() < tolerance.velocity &&
         (settlingPixels - metrics.pixels).abs() < tolerance.distance) {
       return null;
@@ -547,7 +549,6 @@ class CircleFixedExtentScrollPhysics extends ScrollPhysics {
     // If we're going to end back at the same item because initial velocity
     // is too low to break past it, use a spring simulation to get back.
     if (settlingItemIndex == metrics.itemIndex) {
-      log("SPRING DESCRIPTION = $springDescription");
       return SpringSimulation(
         springDescription ??
             SpringDescription.withDampingRatio(
