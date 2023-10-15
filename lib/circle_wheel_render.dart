@@ -463,11 +463,8 @@ class RenderCircleListViewport extends RenderBox
     // Apply the dimensions first in case it changes the scroll offset which
     // determines what should be shown.
     offset.applyViewportDimension(_viewportExtent);
-
-    if (childManager.childCount != null) {
-      offset.applyContentDimensions(
-          _minEstimatedScrollExtent, _maxEstimatedScrollExtent);
-    }
+    offset.applyContentDimensions(
+        _minEstimatedScrollExtent, _maxEstimatedScrollExtent);
 
     // The height, in pixel, that children will be visible and might be laid out
     // and painted.
