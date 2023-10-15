@@ -253,15 +253,15 @@ class FixedExtentScrollController extends ScrollController {
       return;
     }
 
-    final List<Future<void>> futures = <Future<void>>[];
-    for (_FixedExtentScrollPosition position in positions as List<dynamic>) {
-      futures.add(position.animateTo(
-        itemIndex * position.itemExtent,
-        duration: duration,
-        curve: curve,
-      ));
-    }
-    await Future.wait<void>(futures);
+    await Future.wait<void>(<Future<void>>[
+      for (final _FixedExtentScrollPosition position
+          in positions.cast<_FixedExtentScrollPosition>())
+        position.animateTo(
+          itemIndex * position.itemExtent,
+          duration: duration,
+          curve: curve,
+        ),
+    ]);
   }
 
   /// Changes which item index is centered in the controlled scroll view.
@@ -791,7 +791,10 @@ class CircleListElement extends RenderObjectElement
     final CircleListChildDelegate oldDelegate = oldWidget.childDelegate;
     if (newDelegate != oldDelegate &&
         (newDelegate.runtimeType != oldDelegate.runtimeType ||
-            newDelegate.shouldRebuild(oldDelegate))) performRebuild();
+            newDelegate.shouldRebuild(oldDelegate))) {
+      performRebuild();
+      renderObject.markNeedsLayout();
+    }
   }
 
   @override
@@ -900,6 +903,12 @@ class CircleListElement extends RenderObjectElement
     _childElements.forEach((int key, Element child) {
       visitor(child);
     });
+  }
+
+  @override
+  void forgetChild(Element child) {
+    _childElements.remove(child.slot);
+    super.forgetChild(child);
   }
 }
 

@@ -393,6 +393,12 @@ class RenderCircleListViewport extends RenderBox
   bool get sizedByParent => true;
 
   @override
+  @protected
+  Size computeDryLayout(covariant BoxConstraints constraints) {
+    return constraints.biggest;
+  }
+
+  @override
   void performResize() {
     size = constraints.biggest;
   }
@@ -457,8 +463,11 @@ class RenderCircleListViewport extends RenderBox
     // Apply the dimensions first in case it changes the scroll offset which
     // determines what should be shown.
     offset.applyViewportDimension(_viewportExtent);
-    offset.applyContentDimensions(
-        _minEstimatedScrollExtent, _maxEstimatedScrollExtent);
+
+    if (childManager.childCount != null) {
+      offset.applyContentDimensions(
+          _minEstimatedScrollExtent, _maxEstimatedScrollExtent);
+    }
 
     // The height, in pixel, that children will be visible and might be laid out
     // and painted.
